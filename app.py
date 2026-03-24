@@ -68,7 +68,9 @@ if st.session_state.game_active and not st.session_state.game_over:
         word = st.text_input("回答を入力してください")
         submitted = st.form_submit_button("✅ 回答")
 
-    if submitted and word.strip():
+    # ─── 送信処理（二重処理ガード） ────────────────────────
+    if submitted and word.strip() and not st.session_state.submitted_processed:
+        st.session_state.submitted_processed = True  # 二重実行防止
         word = word.strip()
         lose_reason = None
 
@@ -102,18 +104,15 @@ if st.session_state.game_active and not st.session_state.game_over:
             st.session_state.current_player = (st.session_state.current_player % player_count) + 1
             st.session_state.turn_start = time.time()
 
-        # 送信処理済みフラグを立てて即rerun
-        st.session_state.submitted_processed = True
         st.rerun()
 
     # ─── 自動リフレッシュ（タイマー更新用） ────────────────
+    # submitted_processedフラグをリセットしつつ、常にsleep+rerunでタイマーを継続
     if st.session_state.submitted_processed:
-        # 送信直後の1回目rerunはここでフラグをリセットして終了
         st.session_state.submitted_processed = False
-    else:
-        # 通常のタイマー更新
-        time.sleep(0.5)
-        st.rerun()
+
+    time.sleep(0.5)
+    st.rerun()
 
 # ─── 回答ログ表示 ──────────────────────────────────────────
 if st.session_state.log:
